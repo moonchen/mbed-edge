@@ -15,6 +15,11 @@ find_package (Threads REQUIRED)
 include (cmake/common.cmake)
 
 # Mbed Edge basic configuration
+# Set the TRACE_LEVEL before including the basic config file
+if (DEFINED ENV{MEPT_BLE_TRACE_LEVEL})
+    set (TRACE_LEVEL $ENV{MEPT_BLE_TRACE_LEVEL})
+    add_definitions("-DMBED_TRACE_LINE_LENGTH=8192")
+endif()
 include (cmake/edge_configure.cmake)
 
 # Mbed Edge include directories
@@ -45,34 +50,5 @@ add_subdirectory (lib)
 add_subdirectory (edge-core)
 add_subdirectory (edge-rpc)
 add_subdirectory (pt-client)
-add_subdirectory (pt-example)
-
-# Conditionally build lora-pt if mosquitto is available
-unset(MOSQUITTO_LIB CACHE)
-find_library(MOSQUITTO_LIB mosquitto)
-if (SKIP_LIB_CHECK OR MOSQUITTO_LIB)
-  add_subdirectory (lorapt-example)
-else ()
-  message("Not building the mqtt protocol translator since mosquitto library was not found!")
-endif ()
-
-# Add doc target for building documentation with Doxygen
-# add a target to generate API documentation with Doxygen
-find_package (Doxygen)
-option (BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
-if (BUILD_DOCUMENTATION)
-    if (NOT DOXYGEN_FOUND)
-        message (FATAL_ERROR "Doxygen is needed to build the documentation.")
-    endif ()
-
-    set (doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-    set (doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    configure_file (${doxyfile_in} ${doxyfile} @ONLY)
-
-    add_custom_target (edge-doc
-        COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM)
-endif ()
+add_subdirectory (mept-ble)
 
